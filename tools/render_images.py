@@ -28,7 +28,13 @@ SS = 4
 SPINNER_FRAMES = 12
 # Must cover every size in plugin.js KEY_PX, or those keys get no image.
 DEVICE_KEY_SIZES = (72, 80, 96, 120, 144)
-MANIFEST_DEFAULTS = {"game-off", "display-off", "mic-off", "listen-off", "save-inactive"}
+MANIFEST_DEFAULTS = {
+    "game-off",
+    "display-off",
+    "mic-off",
+    "listen-off",
+    "save-inactive",
+}
 
 
 def round_px(x):
@@ -40,7 +46,9 @@ def background(size):
     draw = ImageDraw.Draw(img)
     for y in range(size):
         t = y / (size - 1)
-        color = tuple(round_px(BG_TOP[i] + (BG_BOTTOM[i] - BG_TOP[i]) * t) for i in range(3))
+        color = tuple(
+            round_px(BG_TOP[i] + (BG_BOTTOM[i] - BG_TOP[i]) * t) for i in range(3)
+        )
         draw.line([(0, y), (size, y)], fill=color + (255,))
     return img
 
@@ -53,7 +61,9 @@ def paste_icon(base, name, cx, cy, diameter, alpha):
     if alpha < 1:
         icon.putalpha(icon.getchannel("A").point(lambda a: round_px(a * alpha)))
     dy = round_px(ICON_Y_OFFSET_SRC_PX.get(name, 0) * scale) - SS
-    base.alpha_composite(icon, dest=(round_px(cx - size / 2), round_px(cy - size / 2) - dy))
+    base.alpha_composite(
+        icon, dest=(round_px(cx - size / 2), round_px(cy - size / 2) - dy)
+    )
 
 
 def fitted_font(draw, text, max_w, size):
@@ -120,7 +130,9 @@ def save(img, rel):
         img.resize((px, px), Image.LANCZOS).save(path)
     if name in MANIFEST_DEFAULTS:
         img.resize((KEY, KEY), Image.LANCZOS).save(OUT / folder / f"{name}@2x.png")
-        img.resize((KEY // 2, KEY // 2), Image.LANCZOS).save(OUT / folder / f"{name}.png")
+        img.resize((KEY // 2, KEY // 2), Image.LANCZOS).save(
+            OUT / folder / f"{name}.png"
+        )
 
 
 def save_with_pressed(rel, **kwargs):
@@ -131,7 +143,12 @@ def save_with_pressed(rel, **kwargs):
 TOGGLES = {
     # action: (on icon, off icon, on label, off label)
     "game": ("game-capture-on", "game-capture-off", "Game on", "Game off"),
-    "display": ("display-capture-on", "display-capture-off", "Desktop on", "Desktop off"),
+    "display": (
+        "display-capture-on",
+        "display-capture-off",
+        "Desktop on",
+        "Desktop off",
+    ),
     "mic": ("microphone-on", "microphone-off", "Mic on", "Mic off"),
     "listen": ("headset-monitor-on", "headset-monitor-off", "Listen on", "Listen off"),
 }
@@ -140,12 +157,23 @@ TOGGLES = {
 def render_toggles():
     for action, (on_icon, off_icon, on_label, off_label) in TOGGLES.items():
         on_name = "live" if action == "game" else "on"
-        save_with_pressed(f"keys/{action}-{on_name}", icon=on_icon, label=on_label, badge=BLUE)
         save_with_pressed(
-            f"keys/{action}-off", icon=off_icon, label=off_label, badge=GREY, label_color=TEXT_OFF
+            f"keys/{action}-{on_name}", icon=on_icon, label=on_label, badge=BLUE
+        )
+        save_with_pressed(
+            f"keys/{action}-off",
+            icon=off_icon,
+            label=off_label,
+            badge=GREY,
+            label_color=TEXT_OFF,
         )
         render_unavailable(action, off_icon)
-        save(render_key(icon=off_icon, label="No source", badge=AMBER, label_color=TEXT_OFF), f"keys/{action}-missing")
+        save(
+            render_key(
+                icon=off_icon, label="No source", badge=AMBER, label_color=TEXT_OFF
+            ),
+            f"keys/{action}-missing",
+        )
 
     for frame in range(SPINNER_FRAMES):
         save(
@@ -163,14 +191,25 @@ def render_toggles():
 def render_unavailable(action, off_icon, badge=DARK):
     for suffix, label in (("offline", "OBS offline"), ("wsoff", "WS disabled")):
         save(
-            render_key(icon=off_icon, label=label, badge=badge, label_color=TEXT_DIM, glyph_alpha=0.45),
+            render_key(
+                icon=off_icon,
+                label=label,
+                badge=badge,
+                label_color=TEXT_DIM,
+                glyph_alpha=0.45,
+            ),
             f"keys/{action}-{suffix}",
         )
 
 
 def render_save():
     save_with_pressed("keys/save-ready", icon="record", label="Save replay")
-    save_with_pressed("keys/save-inactive", icon="record-slash", label="Replay off", label_color=TEXT_OFF)
+    save_with_pressed(
+        "keys/save-inactive",
+        icon="record-slash",
+        label="Replay off",
+        label_color=TEXT_OFF,
+    )
     save(render_key(icon="success", label="Saved"), "keys/save-saved")
     save(render_key(icon="failure", label="Failed"), "keys/save-failed")
     render_unavailable("save", "record-slash", badge=None)

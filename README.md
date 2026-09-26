@@ -1,22 +1,22 @@
 # Clip Manager for Stream Deck
 
-Stream Deck keys for the [Clip Manager](https://github.com/IJuanTM/ClipManager) OBS script. Each key runs one of the script's actions and shows its current state live, so you can see at a glance whether game clipping, desktop capture, your mic and mic monitoring are on.
+Stream Deck keys for the [Clip Manager](https://github.com/IJuanTM/ClipManager) OBS script. Each key runs one of the script's actions and shows its current state live: game clipping, desktop capture, mic and mic monitoring.
 
 ---
 
 ## Keys
 
-| Key             | Press                                      | Shows                                                        |
-| --------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| Key             | Press                                        | Shows                                                                                            |
+|-----------------|----------------------------------------------|--------------------------------------------------------------------------------------------------|
 | Game clipping   | Toggle game clipping for the foreground game | _Game off_, _Connecting_ (spinning ring) while OBS hooks the game, _Game on_ once it's capturing |
-| Desktop capture | Toggle the desktop capture override        | _Desktop on_ / _Desktop off_                                 |
-| Mic             | Mute or unmute the Clip Manager mic source | _Mic on_ / _Mic off_                                         |
-| Listen          | Toggle mic monitoring (hearing yourself)   | _Listen on_ / _Listen off_                                   |
-| Save replay     | Save the replay buffer                     | _Save replay_ while the buffer runs, _Replay off_ when it doesn't; flashes _Saved_ or _Failed_ |
+| Desktop capture | Toggle the desktop capture override          | _Desktop on_ / _Desktop off_                                                                     |
+| Mic             | Mute or unmute the Clip Manager mic source   | _Mic on_ / _Mic off_                                                                             |
+| Listen          | Toggle mic monitoring (hearing yourself)     | _Listen on_ / _Listen off_                                                                       |
+| Save replay     | Save the replay buffer                       | _Save replay_ while the buffer runs, _Replay off_ when it doesn't; flashes _Saved_ or _Failed_   |
 
 Keys use the same icons and colours as the script's popups. They also show when something is wrong: _OBS offline_ (OBS isn't running), _WS disabled_ (OBS's WebSocket server is off), or _No source_ (the source the script is set to isn't in the current scene).
 
-State comes from OBS itself, so the keys stay correct no matter what changed it — a key press, a hotkey, the script's automatic game detection, or a click in OBS.
+State always comes from OBS, not from what the plugin last did, so a key is right whether it changed via a press here, a hotkey, the script's own game detection, or a click in OBS.
 
 ---
 
@@ -31,7 +31,7 @@ State comes from OBS itself, so the keys stay correct no matter what changed it 
 ## Installation
 
 1. Download the latest `.streamDeckPlugin` from [Releases](../../releases) and double-click it.
-2. In OBS, open **Tools → WebSocket Server Settings** and tick **Enable WebSocket server**. Leave authentication on — the plugin reads the port and password from OBS's own config, so there's nothing to enter.
+2. In OBS, open **Tools → WebSocket Server Settings** and tick **Enable WebSocket server**. Leave authentication on: the plugin reads the port and password from OBS's own config, so there's nothing to enter.
 3. Drag the keys from the **Clip Manager** category onto your Stream Deck.
 
 No hotkey bindings are needed; the keys call the script's actions directly.
@@ -50,10 +50,10 @@ The plugin connects to OBS over obs-websocket and:
 
 ## Troubleshooting
 
-- **Every key says _WS disabled_** — enable the WebSocket server in OBS (step 2 above). The keys pick it up within a few seconds.
-- **Every key says _OBS offline_ with OBS running** — check the plugin log at `%APPDATA%\Elgato\StreamDeck\logs\com.ijuantm.clipmanager0.log`. A password rejection is logged there.
-- **A key says _No source_** — the script's source for that key isn't in the scene OBS is showing. Check the script's **Sources** settings.
-- **A press does nothing** — the Clip Manager script isn't loaded, so its actions don't exist. The key shows a warning triangle.
+- **Every key says _WS disabled_**: enable the WebSocket server in OBS (step 2 above). The keys pick it up within a few seconds.
+- **Every key says _OBS offline_ with OBS running**: check the plugin log at `%APPDATA%\Elgato\StreamDeck\logs\com.ijuantm.clipmanager0.log`. A password rejection is logged there.
+- **A key says _No source_**: the script's source for that key isn't in the scene OBS is showing. Check the script's **Sources** settings.
+- **A press does nothing**: the Clip Manager script isn't loaded, so its actions don't exist. The key shows a warning triangle.
 
 ---
 
