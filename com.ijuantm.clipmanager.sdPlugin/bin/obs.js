@@ -40,6 +40,7 @@ class ObsClient extends EventEmitter {
 
   reconnect() {
     this.ws?.close();
+    this.setStatus('offline');
     this.connect();
   }
 

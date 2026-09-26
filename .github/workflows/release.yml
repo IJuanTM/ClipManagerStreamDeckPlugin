@@ -1,8 +1,6 @@
 name: Release
 
-# Publishes a GitHub Release with an installable .streamDeckPlugin whenever the
-# manifest's Version names a version that has no release yet.
-# Bump "Version" in manifest.json, commit, push to master - the release builds itself.
+# Only releases when the manifest Version has no release yet, so ordinary pushes are no-ops.
 
 on:
   push:

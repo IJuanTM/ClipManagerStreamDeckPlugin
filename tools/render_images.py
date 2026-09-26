@@ -26,7 +26,8 @@ FONT = r"C:\Windows\Fonts\segoeuib.ttf"
 KEY = 144
 SS = 4
 SPINNER_FRAMES = 12
-# The plugin only ever sends @2x images; 1x copies are needed just for the manifest's default key images.
+# Must cover every size in plugin.js KEY_PX, or those keys get no image.
+DEVICE_KEY_SIZES = (72, 80, 96, 120, 144)
 MANIFEST_DEFAULTS = {"game-off", "display-off", "mic-off", "listen-off", "save-inactive"}
 
 
@@ -112,11 +113,14 @@ def render_key(
 
 
 def save(img, rel):
-    path = OUT / rel
-    path.parent.mkdir(parents=True, exist_ok=True)
-    img.resize((KEY, KEY), Image.LANCZOS).save(path.with_name(path.name + "@2x.png"))
-    if path.name in MANIFEST_DEFAULTS:
-        img.resize((KEY // 2, KEY // 2), Image.LANCZOS).save(path.with_name(path.name + ".png"))
+    folder, name = rel.split("/")
+    for px in DEVICE_KEY_SIZES:
+        path = OUT / folder / str(px) / f"{name}.png"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        img.resize((px, px), Image.LANCZOS).save(path)
+    if name in MANIFEST_DEFAULTS:
+        img.resize((KEY, KEY), Image.LANCZOS).save(OUT / folder / f"{name}@2x.png")
+        img.resize((KEY // 2, KEY // 2), Image.LANCZOS).save(OUT / folder / f"{name}.png")
 
 
 def save_with_pressed(rel, **kwargs):

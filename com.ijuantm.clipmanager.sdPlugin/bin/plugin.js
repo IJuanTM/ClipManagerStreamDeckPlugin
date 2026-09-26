@@ -13,6 +13,9 @@ const ACTIONS = {
   'com.ijuantm.clipmanager.save': { key: 'save' },
 };
 const IMAGE_DIR = path.join(__dirname, '..', 'imgs', 'keys');
+// Native key pixels per Stream Deck device type: an image at any other size gets resampled soft by Stream Deck.
+const KEY_PX = { 0: 72, 1: 80, 2: 96, 7: 120, 9: 96 };
+const DEFAULT_KEY_PX = 144;
 const POLL_MS = 1000;
 const SPINNER_FRAMES = 12;
 const SPINNER_MS = 90;
@@ -31,8 +34,10 @@ for (let i = 2; i < process.argv.length - 1; i += 2) args[process.argv[i].replac
 
 const sd = new WsClient(`ws://127.0.0.1:${args.port}`);
 const obs = new ObsClient(log);
-const keys = new Map(); // context -> { key, hotkey, last, pressedAt, pressed, flash, flashTimer }
+const keys = new Map(); // context -> { key, hotkey, px, last, pressedAt, pressed, flash, flashTimer }
 const images = new Map();
+const deviceKeyPx = new Map();
+for (const device of JSON.parse(args.info ?? '{}').devices ?? []) deviceKeyPx.set(device.id, KEY_PX[device.type]);
 
 let state = { game: 'off', display: false, mic: false, listen: false, buffer: false };
 let names = null;
@@ -52,12 +57,12 @@ function sendToDeck(event, context, payload) {
   sd.send(JSON.stringify({ event, context, payload }));
 }
 
-function loadImage(name) {
-  if (!images.has(name)) {
-    const file = path.join(IMAGE_DIR, `${name}@2x.png`);
-    images.set(name, fs.existsSync(file) ? `data:image/png;base64,${fs.readFileSync(file).toString('base64')}` : null);
+function loadImage(px, name) {
+  const file = path.join(IMAGE_DIR, String(px), `${name}.png`);
+  if (!images.has(file)) {
+    images.set(file, fs.existsSync(file) ? `data:image/png;base64,${fs.readFileSync(file).toString('base64')}` : null);
   }
-  return images.get(name);
+  return images.get(file);
 }
 
 function stateImage(key) {
@@ -79,8 +84,8 @@ function render(context) {
   const entry = keys.get(context);
   if (!entry) return;
   let name = entry.flash ?? stateImage(entry.key);
-  if (entry.pressed && loadImage(`${name}-pressed`)) name = `${name}-pressed`;
-  const image = loadImage(name);
+  if (entry.pressed && loadImage(entry.px, `${name}-pressed`)) name = `${name}-pressed`;
+  const image = loadImage(entry.px, name);
   if (entry.last === name || !image) return;
   entry.last = name;
   sendToDeck('setImage', context, { image, target: 0 });
@@ -153,7 +158,11 @@ async function resolveNames() {
     display: fromScript.display || firstOfKind('monitor_capture'),
     mic: fromScript.mic || firstOfKind('wasapi_input_capture'),
   };
-  log(`sources: game='${resolved.game}' display='${resolved.display}' mic='${resolved.mic}'`);
+  const known = new Set(inputs.map((i) => i.inputName));
+  namesSuspect = Object.values(resolved).some((name) => !known.has(name));
+  if (JSON.stringify(resolved) !== JSON.stringify(names)) {
+    log(`sources: game='${resolved.game}' display='${resolved.display}' mic='${resolved.mic}'`);
+  }
   return resolved;
 }
 
@@ -161,7 +170,6 @@ async function readState() {
   if (!names || (namesSuspect && Date.now() - namesResolvedAt > NAME_RETRY_MS)) {
     names = await resolveNames();
     namesResolvedAt = Date.now();
-    namesSuspect = false;
   }
   const optional = (promise) => promise.catch(() => null);
   const mic = names.mic ? { inputName: names.mic } : null;
@@ -185,7 +193,6 @@ async function readState() {
     listen: monitor ? monitor.monitorType !== 'OBS_MONITORING_TYPE_NONE' : null,
     buffer: Boolean(buffer?.outputActive),
   };
-  if (!game || !display || next.mic === null) namesSuspect = true;
   return next;
 }
 
@@ -241,7 +248,15 @@ function onDeckMessage(text) {
     case 'willAppear': {
       const action = ACTIONS[msg.action];
       if (!action) return;
-      keys.set(context, { ...action, last: null, pressed: false, pressedAt: 0, flash: null, flashTimer: null });
+      keys.set(context, {
+        ...action,
+        px: deviceKeyPx.get(msg.device) ?? DEFAULT_KEY_PX,
+        last: null,
+        pressed: false,
+        pressedAt: 0,
+        flash: null,
+        flashTimer: null,
+      });
       render(context);
       scheduleRefresh();
       break;
@@ -271,6 +286,9 @@ function onDeckMessage(text) {
       }, Math.max(0, MIN_PRESS_MS - (Date.now() - entry.pressedAt)));
       break;
     }
+    case 'deviceDidConnect':
+      deviceKeyPx.set(msg.device, KEY_PX[msg.deviceInfo?.type]);
+      break;
     case 'systemDidWakeUp':
       obs.reconnect();
       break;
