@@ -1,0 +1,108 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "UUID": "com.ijuantm.clipmanager",
+  "Name": "Clip Manager",
+  "Version": "1.0.0",
+  "Author": "ijuantm",
+  "Description": "Stateful keys for the Clip Manager OBS script: game clipping, desktop capture, mic, listening and save replay.",
+  "Category": "Clip Manager",
+  "CategoryIcon": "imgs/category",
+  "Icon": "imgs/plugin",
+  "CodePath": "bin/plugin.js",
+  "SDKVersion": 2,
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "disabled"
+  },
+  "Software": {
+    "MinimumVersion": "6.5"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "Actions": [
+    {
+      "UUID": "com.ijuantm.clipmanager.game",
+      "Name": "Game clipping",
+      "Tooltip": "Toggle game clipping for the fullscreen game in the foreground",
+      "Icon": "imgs/actions/game",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/game-off",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.ijuantm.clipmanager.display",
+      "Name": "Desktop capture",
+      "Tooltip": "Toggle the desktop capture override",
+      "Icon": "imgs/actions/display",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/display-off",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.ijuantm.clipmanager.mic",
+      "Name": "Mic",
+      "Tooltip": "Mute or unmute the Clip Manager mic source",
+      "Icon": "imgs/actions/mic",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/mic-off",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.ijuantm.clipmanager.listen",
+      "Name": "Listen",
+      "Tooltip": "Toggle hearing yourself (mic monitoring)",
+      "Icon": "imgs/actions/listen",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/listen-off",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "UUID": "com.ijuantm.clipmanager.save",
+      "Name": "Save replay",
+      "Tooltip": "Save the replay buffer",
+      "Icon": "imgs/actions/save",
+      "Controllers": [
+        "Keypad"
+      ],
+      "UserTitleEnabled": false,
+      "States": [
+        {
+          "Image": "imgs/keys/save-inactive",
+          "ShowTitle": false
+        }
+      ]
+    }
+  ]
+}

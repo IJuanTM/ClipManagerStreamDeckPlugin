@@ -1,0 +1,7 @@
+__pycache__/
+node_modules/
+logs/
+dist/
+*.streamDeckPlugin
+
+.claude

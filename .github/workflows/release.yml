@@ -1,0 +1,65 @@
+name: Release
+
+# Publishes a GitHub Release with an installable .streamDeckPlugin whenever the
+# manifest's Version names a version that has no release yet.
+# Bump "Version" in manifest.json, commit, push to master - the release builds itself.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - com.ijuantm.clipmanager.sdPlugin/**
+      - README.md
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read version
+        id: v
+        run: |
+          version=$(jq -r '.Version' com.ijuantm.clipmanager.sdPlugin/manifest.json | grep -oP '^[0-9]+\.[0-9]+\.[0-9]+(?=(\.0)?$)' || true)
+          if [ -z "$version" ]; then
+            echo "::error::manifest.json Version must look like 1.2.3"
+            exit 1
+          fi
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          echo "Version: $version"
+
+      - name: Check for existing release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "${{ steps.v.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Release ${{ steps.v.outputs.tag }} already exists - nothing to do."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Pack plugin
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          set -eu
+          npx -y @elgato/cli@1.10.0 pack com.ijuantm.clipmanager.sdPlugin --output dist --force --no-update-check
+          package="ClipManagerStreamDeckPlugin-${{ steps.v.outputs.tag }}.streamDeckPlugin"
+          mv dist/com.ijuantm.clipmanager.streamDeckPlugin "$package"
+          echo "PACKAGE=$package" >> "$GITHUB_ENV"
+
+      - name: Create release
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" "$PACKAGE" \
+            --target "${{ github.sha }}" \
+            --title "${{ steps.v.outputs.tag }}" \
+            --generate-notes
