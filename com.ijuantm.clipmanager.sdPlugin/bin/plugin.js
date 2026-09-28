@@ -41,6 +41,7 @@ for (const device of JSON.parse(args.info ?? '{}').devices ?? []) deviceKeyPx.se
 
 let state = { game: 'off', display: false, mic: false, listen: false, buffer: false };
 let names = null;
+let namesGeneration = 0;
 let namesResolvedAt = 0;
 let namesSuspect = false;
 let refreshing = false;
@@ -166,13 +167,23 @@ async function resolveNames() {
   return resolved;
 }
 
+function invalidateNames() {
+  names = null;
+  namesGeneration++;
+}
+
 async function readState() {
-  if (!names || (namesSuspect && Date.now() - namesResolvedAt > NAME_RETRY_MS)) {
-    names = await resolveNames();
-    namesResolvedAt = Date.now();
+  let current = names;
+  if (!current || (namesSuspect && Date.now() - namesResolvedAt > NAME_RETRY_MS)) {
+    const generation = namesGeneration;
+    current = await resolveNames();
+    if (generation === namesGeneration) {
+      names = current;
+      namesResolvedAt = Date.now();
+    }
   }
   const optional = (promise) => promise.catch(() => null);
-  const mic = names.mic ? { inputName: names.mic } : null;
+  const mic = current.mic ? { inputName: current.mic } : null;
   const [sceneItems, mute, monitor, buffer] = await Promise.all([
     obs
       .request('GetCurrentProgramScene')
@@ -183,8 +194,8 @@ async function readState() {
     optional(obs.request('GetReplayBufferStatus')),
   ]);
   const item = (name) => (name ? sceneItems.find((i) => i.sourceName === name) : undefined);
-  const game = item(names.game);
-  const display = item(names.display);
+  const game = item(current.game);
+  const display = item(current.display);
   const next = {
     // Hook in progress = source shown by the script but OBS has no frame yet.
     game: !game ? 'missing' : !game.sceneItemEnabled ? 'off' : game.sceneItemTransform?.sourceWidth > 0 ? 'live' : 'connecting',
@@ -311,7 +322,7 @@ sd.on('close', () => process.exit(0));
 
 obs.on('status', (status) => {
   if (status === 'ready') {
-    names = null;
+    invalidateNames();
     refresh();
   } else {
     renderAll();
@@ -319,6 +330,6 @@ obs.on('status', (status) => {
 });
 obs.on('event', (type) => {
   if (type === 'ReplayBufferSaved') flash('save', 'save-saved');
-  if (NAME_EVENTS.has(type)) names = null;
+  if (NAME_EVENTS.has(type)) invalidateNames();
   scheduleRefresh();
 });
